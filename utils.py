@@ -22,3 +22,17 @@ def log_exceptions(func):
             raise
 
     return wrapper
+
+
+def async_log_exceptions(func):
+    """Async variant of log_exceptions."""
+
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except Exception:
+            logging.getLogger(func.__module__).exception("Error in %s", func.__name__)
+            raise
+
+    return wrapper
