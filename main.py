@@ -1,6 +1,7 @@
 """Simple entrypoint for Council Bot."""
 import asyncio
 import logging
+import os
 from utils import setup_logging
 from auth_handler import AuthHandler
 from data_feed import TopstepDataFeed
@@ -11,14 +12,19 @@ from models import MarketData
 async def main() -> None:
     setup_logging()
     auth = AuthHandler()
-    api_key = "YOUR_API_KEY"  # replace with actual key or load from env
+    api_key = os.environ.get("TOPSTEP_API_KEY", "YOUR_API_KEY")
     success = await auth.authenticate_async(api_key)
     if not success:
         print("Authentication failed")
         return
 
     feed = TopstepDataFeed(auth.get_access_token)
-    await feed.connect()
+    try:
+        await feed.connect()
+    except Exception as exc:
+        logging.getLogger(__name__).error("Failed to connect data feed: %s", exc)
+        return
+
     feed.subscribe_quotes("CON.F.US.EP.M25")
 
     manager = StrategyManager([ICTStrategy(), DeltaStrategy()])
@@ -43,11 +49,14 @@ async def main() -> None:
 
 
 async def process_market_data(manager: StrategyManager, data: MarketData) -> None:
-    signal = await manager.evaluate(data)
-    if signal:
-        logging.getLogger("trade").info(
-            "Trade signal %s from %s at %s", signal.direction, signal.strategy, signal.entry_price
-        )
+    try:
+        signal = await manager.evaluate(data)
+        if signal:
+            logging.getLogger("trade").info(
+                "Trade signal %s from %s at %s", signal.direction, signal.strategy, signal.entry_price
+            )
+    except Exception as exc:
+        logging.getLogger(__name__).exception("Error processing market data: %s", exc)
 
 
 if __name__ == "__main__":
