@@ -3,10 +3,11 @@
 import logging
 import asyncio
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable # NEW: Added Callable import
+from typing import Dict, List, Optional, Any, Callable
 import csv
 import os
-import uuid # For generating unique IDs
+import uuid  # For generating unique IDs
+import aiohttp
 
 # Import consolidated models
 from models import Order, Position, TradeSignal, OrderType, OrderStatus, TradeDirection, TradeRecord
