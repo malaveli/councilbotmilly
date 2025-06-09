@@ -1,0 +1,114 @@
+
+TopstepX API & WebSocket Integration Cheat Sheet
+================================================
+
+🔐 AUTHENTICATION (REST API)
+-----------------------------
+POST /api/Auth/loginKey
+→ Login with API key
+Body:
+{ "userName": "your_name", "apiKey": "your_key" }
+→ Returns: { "token": "JWT_TOKEN" }
+
+POST /api/Auth/validate
+→ Refresh token if expired
+Returns: { "newToken": "JWT_TOKEN" }
+
+POST /api/Auth/logout
+→ Logs out current user
+
+📊 ACCOUNT & CONTRACTS (REST API)
+----------------------------------
+POST /api/Account/search
+→ Gets list of accounts (returns accountId)
+Body: { "onlyActiveAccounts": true }
+
+POST /api/Contract/search
+→ Search contracts
+Body: { "searchText": "ES", "live": true }
+
+POST /api/Contract/searchById
+→ Get contract info by ID
+
+📈 HISTORICAL BARS (REST API)
+-----------------------------
+POST /api/History/retrieveBars
+→ OHLCV data for charts
+Body includes:
+- contractId, startTime, endTime
+- unit: 2 = minute, 3 = hour, 4 = day
+
+🧾 ORDERS (REST API)
+---------------------
+POST /api/Order/place
+→ Place order
+Body includes:
+- accountId, contractId, type (1=Limit, 2=Market), side (0=Buy, 1=Sell), size
+
+POST /api/Order/cancel
+→ Cancel order by ID
+
+POST /api/Order/modify
+→ Modify active order
+
+POST /api/Order/search
+→ Past orders (by timestamp)
+
+POST /api/Order/searchOpen
+→ List of working orders
+
+📌 POSITIONS (REST API)
+------------------------
+POST /api/Position/searchOpen
+→ Get open positions
+
+POST /api/Position/closeContract
+→ Close position by contract
+
+POST /api/Position/partialCloseContract
+→ Close partial size
+
+🧠 TRADE HISTORY (REST API)
+----------------------------
+POST /api/Trade/search
+→ Half-turn trades (realized fills)
+
+✅ API STATUS CHECK
+-------------------
+GET /api/Status/ping → Returns "pong"
+
+==============================
+
+🔌 REAL-TIME: SIGNALR WEBSOCKETS
+==============================
+
+👤 USER HUB (wss://rtc.topstepx.com/hubs/user?access_token=JWT)
+--------------------------------------------------------------
+Subscribe calls:
+- SubscribeAccounts()
+- SubscribeOrders(accountId)
+- SubscribePositions(accountId)
+- SubscribeTrades(accountId)
+
+Handlers:
+- GatewayUserAccount → balance updates
+- GatewayUserOrder → order state updates
+- GatewayUserPosition → size/avgPrice
+- GatewayUserTrade → trade fills
+
+📈 MARKET HUB (wss://rtc.topstepx.com/hubs/market?access_token=JWT)
+------------------------------------------------------------------
+Subscribe calls:
+- SubscribeContractQuotes(contractId)
+- SubscribeContractTrades(contractId)
+- SubscribeContractMarketDepth(contractId)
+
+Handlers:
+- GatewayQuote → top of book (L1)
+- GatewayTrade → time & sales
+- GatewayDepth → market depth (L2)
+
+Notes:
+- Use .onreconnected() to re-subscribe on reconnect
+- contractId examples: "CON.F.US.EP.M25"
+- JWT token required for access

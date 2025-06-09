@@ -1,0 +1,130 @@
+Getting Started & Authentication (REST API)
+First Setup Step & Getting the Token: After subscribing to the API and receiving your API Key, you need to acquire your token.
+
+Login with API key: POST /api/Auth/loginKey
+Body: { "userName": "your_name", "apiKey": "your_key" }
+Returns: { "token": "JWT_TOKEN" }
+Swagger documentation for LoginKey: https://api.topstepx.com/swagger/index.html#/Auth/Auth_LoginKey
+Refresh Token: POST /api/Auth/validate
+Refresh token if expired.
+Returns: { "newToken": "JWT_TOKEN" }
+Logout: POST /api/Auth/logout
+Logs out current user.
+API Status Check: GET /api/Status/ping
+Returns "pong".
+
+3. REST API Endpoints
+Account & Contracts:
+Search Accounts: POST /api/Account/search
+Body: { "onlyActiveAccounts": true }
+Returns accountId.
+Search Contracts: POST /api/Contract/search
+Body: { "searchText": "ES", "live": true }
+Get Contract Info by ID: POST /api/Contract/searchById
+Historical Bars (OHLCV data):
+Retrieve Bars: POST /api/History/retrieveBars
+Body includes: contractId, startTime, endTime, unit (2 = minute, 3 = hour, 4 = day).
+
+Orders:
+Place Order: POST /api/Order/place
+Body includes: accountId, contractId, type (1=Limit, 2=Market), side (0=Buy, 1=Sell), size.
+Cancel Order: POST /api/Order/cancel
+Cancel order by ID.
+Modify Order: POST /api/Order/modify
+Modify active order.
+Search Past Orders: POST /api/Order/search
+Search by timestamp.
+Search Open Orders: POST /api/Order/searchOpen
+List of working orders.
+Positions:
+Get Open Positions: POST /api/Position/searchOpen
+Close Position by Contract: POST /api/Position/closeContract
+Close Partial Size: POST /api/Position/partialCloseContract
+Trade History (Realized Fills):
+Search Trades: POST /api/Trade/search
+Half-turn trades.
+
+4. Real-Time: SignalR WebSockets
+Base URL: wss://rtc.topstepx.com/hubs/user?access_token=JWT (for User Hub)
+JWT token is required for access.
+Use .onreconnected() to re-subscribe on reconnect.
+contractId examples: "CON.F.US.EP.M25".
+User Hub (wss://rtc.topstepx.com/hubs/user?access_token=JWT):
+Subscribe calls:
+SubscribeAccounts()
+SubscribeOrders(accountId)
+SubscribePositions(accountId)
+SubscribeTrades(accountId)
+Handlers (updates received):
+GatewayUserAccount → balance updates
+GatewayUserOrder → order state updates
+GatewayUserPosition → size/average price
+GatewayUserTrade → trade fills
+Market Hub (wss://rtc.topstepx.com/hubs/market?access_token=JWT):
+Subscribe calls:
+SubscribeContractQuotes(contractId)
+SubscribeContractTrades(contractId)
+SubscribeContractMarketDepth(contractId)
+Handlers (updates received):
+GatewayQuote → top of book (L1)
+GatewayTrade → time & sales
+GatewayDepth → market depth (L2)
+SignalR Information: SignalR is a real-time communication library by Microsoft.
+SignalR enables: Live price feeds, instant order status updates, account balance and PnL updates, notifications for fills, stops, or brackets triggered.
+It allows the server to push updates to the client instantly, instead of the client repeatedly polling the server for information.
+Documentation: https://gateway.docs.projectx.com/docs/realtime/
+
+5. Frequently Asked Questions & Capabilities
+Programming Knowledge Required: Yes, development experience is needed.
+Supported Programming Languages: Python, Java, C#, JavaScript, .NET, and more. Languages need to be able to call a REST API or use WebSocket connections.
+Software for Bot Creation: Visual Studio, WebStorm, PyCharm, Jupyter Notebooks, among others.
+Bracket, Trailing Stop, OCO Orders: Yes, these can be built using the API. Refer to the documentation at https://gateway.docs.projectx.com/docs/intro/.
+Partially Exiting Positions: Yes, by monitoring positions, you can close or adjust as needed.
+Managing Multiple Accounts/Strategies: Yes, one subscription allows managing trades across all your TopstepX accounts.
+Using API Alongside TopstepX Platform: A single connection is allowed per username. Running both concurrently will cause a conflict and log you out. Tip: Start the API connection first, then open TopstepX charts.
+Rate Limits: Yes, 400 requests can be handled concurrently.
+Custom Indicators, Alerts, Trading Bots: The API is currently for making trades; you cannot create indicators at this time.
+Custom Risk Controls / Flatten/Reverse: Yes, this requires skill and monitoring open positions.
+Porting Strategies from TradingView, NinjaTrader, Thinkorswim: Yes, but not directly. Strategies need to be converted to utilize the API's setup.
+Webhook Integration from TradingView to ProjectX: Supported. Examples are in the API documentation.
+Running on VPS/Cloud (e.g., Google Cloud Run): Not at this time; running automated systems in a VPS is currently prohibited.
+Running Locally on Laptop: Yes, you can take your code with you.
+Copy-Trading: You can set up the API to process orders across any of your accounts; however, they need to be managed individually. Copy-trading features may be available soon.
+Third-Party Tools vs. Custom-Built: No third-party tools (like Strategy Builder in NinjaTrader) are available; all automation must be custom-built.
+Paper Trading: Yes, you need a Practice Account set up in the new Dashboard.
+TILT Data Access: Not accessible at this time, but options are being reviewed.
+Code Privacy: Code created with the API is private unless you share it.
+Marketplace: No real "Marketplace" at this time. You can post in Topstep's Discord.
+Retrieving Candle Data (non-time-based): You receive real-time data, but you would need to code Renko and Heikin Ashi mathematical formulas for reference. Plotting candles is currently not possible.
+Full List of Tradable Contracts: Yes, available via a Topstep API Help Center Article.
+
+6. Helpful Resources
+Topstep Help Center: https://help.topstep.com/en/articles/11187768-topstepx-api-access
+ProjectX Support: https://www.projectx.com/
+API Documentation: https://gateway.docs.projectx.com/
+Discord Channel (TopstepX-API): https://discord.com/channels/806986940024619039/1371553562890604606
+Topstep Dashboard (Practice Account Setup): https://dashboard.topstep.com/
+ProjectX Dashboard (Subscribe to API & Get API Key): https://dashboard.projectx.com/
+Use code topstep for 50% off.
+Custom GPT - TopstepX Code Builder: https://chatgpt.com/g/g-67f5cba520fc8191aabb29b2a075477b-topstepx-code-builder
+Learning to Code: OneMonth.com, Udemy.com, Coursera.org, Codecademy.com.
+Tutorial and Step-by-Step Videos: Planned for the near future.
+
+7. Related Documentation Links:
+Authentication: https://gateway.docs.projectx.com/docs/getting-started/authenticate/authenticate-api-key
+Validate Session: https://gateway.docs.projectx.com/docs/getting-started/validate-session
+Placing Your First Order: https://gateway.docs.projectx.com/docs/getting-started/placing-your-first-order/
+Connection URLs: https://gateway.docs.projectx.com/docs/getting-started/connection-urls
+Account Search: https://gateway.docs.projectx.com/docs/api-reference/account/search-accounts
+Retrieve Bars: https://gateway.docs.projectx.com/docs/api-reference/market-data/retrieve-bars
+Search Contracts: https://gateway.docs.projectx.com/docs/api-reference/market-data/search-contracts
+Search Contracts by ID: https://gateway.docs.projectx.com/docs/api-reference/market-data/search-contracts-by-id
+Order Search: https://gateway.docs.projectx.com/docs/api-reference/order/order-search
+Order Search Open: https://gateway.docs.projectx.com/docs/api-reference/order/order-search-open
+Order Place: https://gateway.docs.projectx.com/docs/api-reference/order/order-place
+Order Cancel: https://gateway.docs.projectx.com/docs/api-reference/order/order-cancel
+Order Modify: https://gateway.docs.projectx.com/docs/api-reference/order/order-modify
+Close Positions: https://gateway.docs.projectx.com/docs/api-reference/positions/close-positions
+Close Positions Partial: https://gateway.docs.projectx.com/docs/api-reference/positions/close-positions-partial
+Search Open Positions: https://gateway.docs.projectx.com/docs/api-reference/positions/search-open-positions
+Trade Search: https://gateway.docs.projectx.com/docs/api-reference/trade/trade-search
