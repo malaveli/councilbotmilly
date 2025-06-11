@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 from models import TradeSignal, TradeDirection, MarketData
 from mentalism.decision_tree import MentalistDecisionTree
+from mentalism.signal_model import SignalModel
 
 
 @dataclass
@@ -50,16 +51,14 @@ class MentalistStrategy(TradeStrategy):
 
     async def analyze(self, market_data: MarketData) -> Optional[TradeSignal]:
         self.log.debug("MentalistStrategy analyzing market data")
-        try:
-            bias = "long" if market_data.close >= market_data.open else "short"
-        except Exception:  # Fallback if OHLC not provided
-            bias = None
+        model = SignalModel(market_data)
+        signals = model.generate_signals()
 
         tree = MentalistDecisionTree(
-            bias=bias,
-            liquidity_sweep=market_data.indicators.get("liquidity_sweep", False),
-            delta_confirmation=market_data.indicators.get("delta_confirmation", False),
-            time_window_ok=True,
+            bias=signals["bias"],
+            liquidity_sweep=signals["liquidity_sweep"],
+            delta_confirmation=signals["delta_confirmation"],
+            time_window_ok=signals["time_window_ok"],
         )
         result = tree.evaluate()
         if result["valid_setup"]:
