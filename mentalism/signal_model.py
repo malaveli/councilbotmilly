@@ -1,26 +1,45 @@
 from datetime import datetime
-import random
+from collections import deque
+from statistics import mean
+import logging
 
 class SignalModel:
-    """Simulates input signals for Mentalist logic."""
+    """Generate Mentalist signals from real market data."""
 
-    def __init__(self, market_data):
+    def __init__(self, market_data, price_history: deque, volume_history: deque):
         self.market_data = market_data
+        self.price_history = price_history
+        self.volume_history = volume_history
+        self.log = logging.getLogger(self.__class__.__name__)
 
     def get_bias(self) -> str | None:
-        """Determine market bias. Placeholder using random."""
-        return "long" if random.random() > 0.5 else "short"
+        """Determine high timeframe bias using moving averages."""
+        if len(self.price_history) < 10:
+            self.log.debug("Not enough history for bias calculation")
+            return None
+        short_sma = mean(list(self.price_history)[-5:])
+        long_sma = mean(list(self.price_history)[-10:])
+        return "long" if short_sma > long_sma else "short"
 
     def detect_liquidity_sweep(self) -> bool:
-        """Detect engineered liquidity moves. Placeholder implementation."""
-        return random.random() > 0.4
+        """Detect sharp moves relative to recent range and volume."""
+        if len(self.price_history) < 2:
+            return False
+        recent_range = max(self.price_history) - min(self.price_history)
+        if recent_range == 0:
+            return False
+        last_move = abs(self.price_history[-1] - self.price_history[-2])
+        avg_vol = mean(self.volume_history) if self.volume_history else 0
+        return last_move > recent_range * 0.5 and self.market_data.volume > avg_vol * 1.5
 
     def delta_confirmed(self) -> bool:
-        """Check for delta confirmation. Placeholder implementation."""
-        return random.random() > 0.6
+        """Confirm order flow imbalance using bid/ask sizes."""
+        if self.market_data.bid and self.market_data.ask:
+            return self.market_data.bid > self.market_data.ask
+        return False
 
     def valid_time(self) -> bool:
-        """Only trade during a predefined time window."""
+        """Allow trading only during a predefined time window."""
         now = datetime.now()
         return (
             (now.hour == 9 and now.minute >= 30)

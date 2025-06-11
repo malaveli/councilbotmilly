@@ -14,5 +14,5 @@ A minimal example trading bot for the TopstepX platform.
    python main.py
    ```
 The bot authenticates, connects to the market WebSocket and logs trade alerts.
-It now includes a simple "Mentalist" strategy using a decision tree for trade
-qualification.
+It now includes a "Mentalist" strategy using a decision tree fed by real
+market data rather than random placeholders.

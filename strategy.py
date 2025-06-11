@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
 from typing import List, Optional
+from collections import deque
 from models import TradeSignal, TradeDirection, MarketData
 from mentalism.decision_tree import MentalistDecisionTree
 from mentalism.signal_model import SignalModel
@@ -49,9 +50,16 @@ class DeltaStrategy(TradeStrategy):
 class MentalistStrategy(TradeStrategy):
     """Strategy leveraging the Mentalist decision tree."""
 
+    def __init__(self, config: StrategyConfig | None = None) -> None:
+        super().__init__(config)
+        self.price_history: deque[float] = deque(maxlen=20)
+        self.volume_history: deque[int] = deque(maxlen=20)
+
     async def analyze(self, market_data: MarketData) -> Optional[TradeSignal]:
         self.log.debug("MentalistStrategy analyzing market data")
-        model = SignalModel(market_data)
+        self.price_history.append(market_data.last)
+        self.volume_history.append(market_data.volume)
+        model = SignalModel(market_data, self.price_history, self.volume_history)
         signals = model.generate_signals()
 
         tree = MentalistDecisionTree(
