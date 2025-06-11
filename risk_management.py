@@ -156,6 +156,32 @@ class RiskManager:
             self.diagnostics_log_signal.emit(f"RISK: SL Triggered for {position.symbol} @ {current_price:.2f}")
             await self.api_client.close_position(position.symbol, position.quantity)  # Pass contract_id and full quantity
 
+    def update_trailing_stop(self, position: Position, trailing_ticks: int, tick_size: float = 0.25) -> None:
+        """Adjust stop loss price as a position becomes profitable."""
+        if position.stop_loss_price is None or position.current_market_price is None:
+            return
+
+        if position.direction == TradeDirection.LONG:
+            new_sl = position.current_market_price - trailing_ticks * tick_size
+            if new_sl > position.stop_loss_price:
+                position.stop_loss_price = new_sl
+                logger.info(
+                    f"RiskManager: Trailing stop for {position.symbol} moved to {new_sl:.2f}"
+                )
+                self.diagnostics_log_signal.emit(
+                    f"RISK: Trailing SL {position.symbol} -> {new_sl:.2f}"
+                )
+        elif position.direction == TradeDirection.SHORT:
+            new_sl = position.current_market_price + trailing_ticks * tick_size
+            if new_sl < position.stop_loss_price:
+                position.stop_loss_price = new_sl
+                logger.info(
+                    f"RiskManager: Trailing stop for {position.symbol} moved to {new_sl:.2f}"
+                )
+                self.diagnostics_log_signal.emit(
+                    f"RISK: Trailing SL {position.symbol} -> {new_sl:.2f}"
+                )
+
     async def verify_margin_risk(self, trade_signal: TradeSignal, size: int) -> bool:
         """Ensure sufficient margin exists for a new trade."""
         required_margin = await self.api_client.get_margin_requirement(trade_signal.contract_id, size)
